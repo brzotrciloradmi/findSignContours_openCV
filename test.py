@@ -64,8 +64,10 @@ def draw_contours(frame ,red_mask, green_mask, blue_mask, yellow_mask):
 
             if len(approx) == 3:
                 print("Crveni Trougao")
+                writeCntImg(frame, cnt)
             elif len(approx) > 7 and len(approx) < 15:
                 print("Crveni Krug")
+                writeCntImg(frame, cnt)
 
     for cnt in contours_green:
         area = cv2.contourArea(cnt)
@@ -75,6 +77,7 @@ def draw_contours(frame ,red_mask, green_mask, blue_mask, yellow_mask):
 
             if len(approx) == 4:
                 print("Zeleni Pravougaonik")
+                writeCntImg(frame, cnt)
 
     for cnt in contours_blue:
         area = cv2.contourArea(cnt)
@@ -84,6 +87,7 @@ def draw_contours(frame ,red_mask, green_mask, blue_mask, yellow_mask):
 
             if len(approx) == 4:
                 print("Plavi Pravougaonik")
+                writeCntImg(frame, cnt)
 
     for cnt in contours_yellow:
         area = cv2.contourArea(cnt)
@@ -92,7 +96,8 @@ def draw_contours(frame ,red_mask, green_mask, blue_mask, yellow_mask):
             cv2.drawContours(frame, [cnt], 0, (0, 164, 186), 3)
 
             if len(approx) == 4:
-                print("Zuti Pravougaonik")    
+                print("Zuti Pravougaonik")
+                writeCntImg(frame, cnt)    
 
 def filtering(masks):
     for mask in masks:
@@ -100,6 +105,12 @@ def filtering(masks):
         kernel2 = np.ones((3,3), np.uint8)
         mask = cv2.erode(mask, kernel1)
         #mask = cv2.dilate(mask, kernel2)
+
+def writeCntImg(frame ,cnt):
+    x,y,w,h = cv2.boundingRect(cnt)
+    output = frame[y:y+h, x:x+w]
+    cv2.imwrite('output.jpg', output)
+    
 #Use if you need to find hsv parameters. 
 #Note that you should comment out the cv2.imshow("img", frame) in main while loop
 def testMask(frame, hsv_frame):
@@ -110,13 +121,9 @@ def testMask(frame, hsv_frame):
         area = cv2.contourArea(cnt)
         if area > 400:
             approx = cv2.approxPolyDP(cnt, 0.02*cv2.arcLength(cnt, True), True)
-            x,y,w,h = cv2.boundingRect(cnt)
-            cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),2)
 
             if len(approx) == 3:
                 print("Trougao")
-                output = frame[y:y+h, x:x+w]
-                cv2.imwrite('trougao.jpg', output)
             elif len(approx) == 4:
                 print("Pravougaonik")
             elif len(approx) > 7 and len(approx) < 15:
@@ -136,12 +143,12 @@ while True:
 
     hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    testMask(frame, hsv_frame)
+    #testMask(frame, hsv_frame)
  
-    # red_mask, green_mask, blue_mask, yellow_mask = ret_masks(hsv_frame)
-    # filtering([red_mask, green_mask, blue_mask, yellow_mask])
-    # draw_contours(frame ,red_mask, green_mask, blue_mask, yellow_mask)
-    # cv2.imshow("img", frame)
+    red_mask, green_mask, blue_mask, yellow_mask = ret_masks(hsv_frame)
+    filtering([red_mask, green_mask, blue_mask, yellow_mask])
+    draw_contours(frame ,red_mask, green_mask, blue_mask, yellow_mask)
+    cv2.imshow("img", frame)
 
     if cv2.waitKey(1) == ord('q'):
             break
@@ -155,6 +162,5 @@ cv2.destroyAllWindows()
     #Za zelenu boju koristiti poseban filtar tako da se crvena / linija izgubi na hsvu
     #Za sve boje osim crvene, posto ocekujemo samo pravougaonike, parametar epsilon iz funkcije approxPolyDP()..., 0.2*...) povec#
     #optimizuj i sredi #
-    #na osnovu aproksimovanih kontura izvuci najmanju i najvecu x i y koordinatu i parsirati taj isecak u novu sliku
-
+    #dodati poseban slucaj za zutu boju, nije dovoljno traziti samo zutu na slici jer je znak prednosti bangav
     #DONE
